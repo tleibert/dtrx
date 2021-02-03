@@ -34,7 +34,7 @@ if os.path.exists('scripts/dtrx') and os.path.exists('tests'):
 elif os.path.exists('../scripts/dtrx') and os.path.exists('../tests'):
     pass
 else:
-    print "ERROR: Can't run tests in this directory!"
+    print("ERROR: Can't run tests in this directory!")
     sys.exit(2)
 
 DTRX_SCRIPT = os.path.realpath('../scripts/dtrx')
@@ -71,7 +71,7 @@ class ExtractorTest(object):
         return process
 
     def get_results(self, command, stdin=None):
-        print >>self.outbuffer, "Output from %s:" % (' '.join(command),)
+        print("Output from %s:" % (' '.join(command),), file=self.outbuffer)
         self.outbuffer.flush()
         status = self.start_proc(command, stdin, self.outbuffer).wait()
         process = subprocess.Popen(['find'], stdout=subprocess.PIPE)
@@ -132,7 +132,7 @@ class ExtractorTest(object):
             last_part = ''
         else:
             last_part = ': %s' % (message,)
-        print "%7s: %s%s" % (status, self.name, last_part)
+        print("%7s: %s%s" % (status, self.name, last_part))
         return raw_status
 
     def compare_results(self, actual):
@@ -141,13 +141,13 @@ class ExtractorTest(object):
         status, expected = self.get_shell_results()
         self.clean()
         if expected != actual:
-            print >>self.outbuffer, "Only in baseline results:"
-            print >>self.outbuffer, '\n'.join(expected.difference(actual))
-            print >>self.outbuffer, "Only in actual results:"
-            print >>self.outbuffer, '\n'.join(actual.difference(expected))
+            print("Only in baseline results:", file=self.outbuffer)
+            print('\n'.join(expected.difference(actual)), file=self.outbuffer)
+            print("Only in actual results:", file=self.outbuffer)
+            print('\n'.join(actual.difference(expected)), file=self.outbuffer)
             return self.show_status('FAILED')
         elif posttest_result != 0:
-            print >>self.outbuffer, "Posttest gave status code", posttest_result
+            print("Posttest gave status code", posttest_result, file=self.outbuffer)
             return self.show_status('FAILED')
         return self.show_status('Passed')
     
@@ -197,7 +197,7 @@ class ExtractorTest(object):
             os.chdir(self.directory)
         try:
             result = self.check_results()
-        except ExtractorTestError, error:
+        except ExtractorTestError as error:
             result = self.show_status('ERROR', error)
         self.outbuffer.close()
         if self.directory:
@@ -212,8 +212,8 @@ test_data = yaml.load(test_db.read(-1))
 test_db.close()
 tests = [ExtractorTest(**data) for data in test_data]
 for original_data in test_data:
-    if (original_data.has_key('directory') or
-        (not original_data.has_key('baseline'))):
+    if ('directory' in original_data or
+        ('baseline' not in original_data)):
         continue
     data = original_data.copy()
     data['name'] += ' in ..'
@@ -227,6 +227,6 @@ for outcome in OUTCOMES:
     counts[outcome] = 0
 for result in results:
     counts[result] += 1
-print " Totals:", ', '.join(["%s %s" % (counts[key], key) for key in OUTCOMES])
+print(" Totals:", ', '.join(["%s %s" % (counts[key], key) for key in OUTCOMES]))
 if counts["error"] + counts["failed"] > 0:
     sys.exit(1)
