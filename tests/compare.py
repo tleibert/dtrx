@@ -29,18 +29,19 @@ try:
 except NameError:
     from sets import Set as set
 
-if os.path.exists('scripts/dtrx') and os.path.exists('tests'):
-    os.chdir('tests')
-elif os.path.exists('../scripts/dtrx') and os.path.exists('../tests'):
+if os.path.exists("scripts/dtrx") and os.path.exists("tests"):
+    os.chdir("tests")
+elif os.path.exists("../scripts/dtrx") and os.path.exists("../tests"):
     pass
 else:
     print("ERROR: Can't run tests in this directory!")
     sys.exit(2)
 
-DTRX_SCRIPT = os.path.realpath('../scripts/dtrx')
-SHELL_CMD = ['sh', '-se']
+DTRX_SCRIPT = os.path.realpath("../scripts/dtrx")
+SHELL_CMD = ["sh", "-se"]
 ROOT_DIR = os.path.realpath(os.curdir)
-OUTCOMES = ['error', 'failed', 'passed']
+OUTCOMES = ["error", "failed", "passed"]
+
 
 class ExtractorTestError(Exception):
     pass
@@ -48,91 +49,116 @@ class ExtractorTestError(Exception):
 
 class ExtractorTest:
     def __init__(self, **kwargs):
-        self.name =  kwargs['name']
-        self.options = kwargs.get('options', '-n').split()
-        self.filenames = kwargs.get('filenames', '').split()
+        self.name = kwargs["name"]
+        self.options = kwargs.get("options", "-n").split()
+        self.filenames = kwargs.get("filenames", "").split()
 
-        for key in ('directory', 'prerun', 'posttest', 'baseline', 'error',
-                    'input', 'output', 'cleanup'):
+        for key in (
+            "directory",
+            "prerun",
+            "posttest",
+            "baseline",
+            "error",
+            "input",
+            "output",
+            "cleanup",
+        ):
             setattr(self, key, kwargs.get(key, None))
-        for key in ('grep', 'antigrep'):
+        for key in ("grep", "antigrep"):
             value = kwargs.get(key, [])
             if isinstance(value, str):
                 value = [value]
             setattr(self, key, value)
-        if self.input and (not self.input.endswith('\n')):
-            self.input = self.input + '\n'
+        if self.input and (not self.input.endswith("\n")):
+            self.input = self.input + "\n"
 
     def start_proc(self, command, stdin=None, output=None):
-        process = subprocess.Popen(command, stdin=subprocess.PIPE,
-                                   stdout=output, stderr=output)
+        process = subprocess.Popen(
+            command, stdin=subprocess.PIPE, stdout=output, stderr=output
+        )
         if stdin:
             process.stdin.write(stdin)
         process.stdin.close()
         return process
 
     def get_results(self, command, stdin=None):
-        print("Output from %s:" % (' '.join(command),), file=self.outbuffer)
+        print("Output from %s:" % (" ".join(command),), file=self.outbuffer)
         self.outbuffer.flush()
         status = self.start_proc(command, stdin, self.outbuffer).wait()
-        process = subprocess.Popen(['find'], stdout=subprocess.PIPE)
+        process = subprocess.Popen(["find"], stdout=subprocess.PIPE)
         output = process.stdout.read(-1)
         process.stdout.close()
         process.wait()
-        return status, set(output.split('\n'))
-        
+        return status, set(output.split("\n"))
+
     def run_script(self, key):
         commands = getattr(self, key)
         if commands is not None:
             if self.directory:
-                directory_hint = '../'
+                directory_hint = "../"
             else:
-                directory_hint = ''
+                directory_hint = ""
             self.start_proc(SHELL_CMD + [directory_hint], commands)
 
     def get_shell_results(self):
-        self.run_script('prerun')
+        self.run_script("prerun")
         return self.get_results(SHELL_CMD + self.filenames, self.baseline)
 
     def get_extractor_results(self):
-        self.run_script('prerun')
-        return self.get_results([DTRX_SCRIPT] + self.options + self.filenames,
-                                self.input)
-        
+        self.run_script("prerun")
+        return self.get_results(
+            [DTRX_SCRIPT] + self.options + self.filenames, self.input
+        )
+
     def get_posttest_result(self):
         if not self.posttest:
             return 0
         return self.start_proc(SHELL_CMD, self.posttest).wait()
 
     def clean(self):
-        self.run_script('cleanup')
+        self.run_script("cleanup")
         if self.directory:
             target = os.path.join(ROOT_DIR, self.directory)
             extra_options = []
         else:
             target = ROOT_DIR
-            extra_options = ['(', '(', '-type', 'd',
-                             '!', '-name', 'CVS',
-                             '!', '-name', '.svn', ')',
-                             '-or', '-name', 'test-text',
-                             '-or', '-name', 'test-onefile', ')']
-        status = subprocess.call(['find', target,
-                                  '-mindepth', '1', '-maxdepth', '1'] +
-                                 extra_options +
-                                 ['-exec', 'rm', '-rf', '{}', ';'])
+            extra_options = [
+                "(",
+                "(",
+                "-type",
+                "d",
+                "!",
+                "-name",
+                "CVS",
+                "!",
+                "-name",
+                ".svn",
+                ")",
+                "-or",
+                "-name",
+                "test-text",
+                "-or",
+                "-name",
+                "test-onefile",
+                ")",
+            ]
+        status = subprocess.call(
+            ["find", target, "-mindepth", "1", "-maxdepth", "1"]
+            + extra_options
+            + ["-exec", "rm", "-rf", "{}", ";"]
+        )
         if status != 0:
-            raise ExtractorTestError("cleanup exited with status code %s" %
-                                     (status,))
+            raise ExtractorTestError("cleanup exited with status code %s" % (status,))
 
     def show_status(self, status, message=None):
         raw_status = status.lower()
-        if raw_status != 'passed':
+        if raw_status != "passed":
             self.outbuffer.seek(0, 0)
             sys.stdout.write(self.outbuffer.read(-1))
         if message is None:
-            last_part = ''
+            last_part = ""
         else:
-            last_part = ': %s' % (message,)
+            last_part = ": %s" % (message,)
         print("%7s: %s%s" % (status, self.name, last_part))
         return raw_status
 
@@ -143,15 +169,15 @@ class ExtractorTest:
         self.clean()
         if expected != actual:
             print("Only in baseline results:", file=self.outbuffer)
-            print('\n'.join(expected.difference(actual)), file=self.outbuffer)
+            print("\n".join(expected.difference(actual)), file=self.outbuffer)
             print("Only in actual results:", file=self.outbuffer)
-            print('\n'.join(actual.difference(expected)), file=self.outbuffer)
-            return self.show_status('FAILED')
+            print("\n".join(actual.difference(expected)), file=self.outbuffer)
+            return self.show_status("FAILED")
         elif posttest_result != 0:
             print("Posttest gave status code", posttest_result, file=self.outbuffer)
-            return self.show_status('FAILED')
-        return self.show_status('Passed')
-    
+            return self.show_status("FAILED")
+        return self.show_status("Passed")
+
     def have_error_mismatch(self, status):
         if self.error and (status == 0):
             return "dtrx did not return expected error"
@@ -161,17 +187,15 @@ class ExtractorTest:
 
     def grep_output(self, output):
         for pattern in self.grep:
-            if not re.search(pattern.replace(' ', '\\s+'), output,
-                             re.MULTILINE):
+            if not re.search(pattern.replace(" ", "\\s+"), output, re.MULTILINE):
                 return "output did not match %s" % (pattern)
         for pattern in self.antigrep:
-            if re.search(pattern.replace(' ', '\\s+'), output, re.MULTILINE):
+            if re.search(pattern.replace(" ", "\\s+"), output, re.MULTILINE):
                 return "output matched antigrep %s" % (self.antigrep)
         return None
 
     def check_output(self, output):
-        if ((self.output is not None) and
-            (self.output.strip() != output.strip())):
+        if (self.output is not None) and (self.output.strip() != output.strip()):
             return "output did not match provided text"
         return None
 
@@ -181,15 +205,18 @@ class ExtractorTest:
         self.outbuffer.seek(0, 0)
         self.outbuffer.readline()
         output = self.outbuffer.read(-1)
-        problem = (self.have_error_mismatch(status) or
-                   self.check_output(output) or self.grep_output(output))
+        problem = (
+            self.have_error_mismatch(status)
+            or self.check_output(output)
+            or self.grep_output(output)
+        )
         if problem:
-            return self.show_status('FAILED', problem)
+            return self.show_status("FAILED", problem)
         if self.baseline is not None:
             return self.compare_results(actual)
         else:
             self.clean()
-            return self.show_status('Passed')
+            return self.show_status("Passed")
 
     def run(self):
         self.outbuffer = tempfile.TemporaryFile()
@@ -199,28 +226,28 @@ class ExtractorTest:
         try:
             result = self.check_results()
         except ExtractorTestError as error:
-            result = self.show_status('ERROR', error)
+            result = self.show_status("ERROR", error)
         self.outbuffer.close()
         if self.directory:
             os.chdir(ROOT_DIR)
-            subprocess.call(['chmod', '-R', '700', self.directory])
-            subprocess.call(['rm', '-rf', self.directory])
+            subprocess.call(["chmod", "-R", "700", self.directory])
+            subprocess.call(["rm", "-rf", self.directory])
         return result
 
 
-test_db = open('tests.yml')
+test_db = open("tests.yml")
 test_data = yaml.safe_load(test_db.read(-1))
 test_db.close()
 tests = [ExtractorTest(**data) for data in test_data]
 for original_data in test_data:
-    if ('directory' in original_data or
-        ('baseline' not in original_data)):
+    if "directory" in original_data or ("baseline" not in original_data):
         continue
     data = original_data.copy()
-    data['name'] += ' in ..'
-    data['directory'] = 'inside-dir'
-    data['filenames'] = ' '.join(['../%s' % filename for filename in
-                                  data.get('filenames', '').split()])
+    data["name"] += " in .."
+    data["directory"] = "inside-dir"
+    data["filenames"] = " ".join(
+        ["../%s" % filename for filename in data.get("filenames", "").split()]
+    )
     tests.append(ExtractorTest(**data))
 results = [test.run() for test in tests]
 counts = {}
@@ -228,6 +255,6 @@ for outcome in OUTCOMES:
     counts[outcome] = 0
 for result in results:
     counts[result] += 1
-print(" Totals:", ', '.join(["%s %s" % (counts[key], key) for key in OUTCOMES]))
+print(" Totals:", ", ".join(["%s %s" % (counts[key], key) for key in OUTCOMES]))
 if counts["error"] + counts["failed"] > 0:
     sys.exit(1)
