@@ -46,11 +46,12 @@ class ExtractorTestError(Exception):
     pass
 
 
-class ExtractorTest(object):
+class ExtractorTest:
     def __init__(self, **kwargs):
-        setattr(self, 'name', kwargs['name'])
-        setattr(self, 'options', kwargs.get('options', '-n').split())
-        setattr(self, 'filenames', kwargs.get('filenames', '').split())
+        self.name =  kwargs['name']
+        self.options = kwargs.get('options', '-n').split()
+        self.filenames = kwargs.get('filenames', '').split()
+
         for key in ('directory', 'prerun', 'posttest', 'baseline', 'error',
                     'input', 'output', 'cleanup'):
             setattr(self, key, kwargs.get(key, None))
@@ -208,7 +209,7 @@ class ExtractorTest(object):
 
 
 test_db = open('tests.yml')
-test_data = yaml.load(test_db.read(-1))
+test_data = yaml.safe_load(test_db.read(-1))
 test_db.close()
 tests = [ExtractorTest(**data) for data in test_data]
 for original_data in test_data:
