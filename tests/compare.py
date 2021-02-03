@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#! /usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
 # compare.py -- High-level tests for dtrx.
