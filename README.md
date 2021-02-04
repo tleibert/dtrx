@@ -32,7 +32,7 @@ cleanly extract many archive types
 SYNOPSIS
 ========
 
-dtrx [OPTIONS] ARCHIVE [ARCHIVE ...]
+`dtrx [OPTIONS] ARCHIVE [ARCHIVE ...]`
 
 DESCRIPTION
 ===========
@@ -51,7 +51,7 @@ owner can read and write all those files.
 To run dtrx, simply call it with the archive(s) you wish to extract as
 arguments.  For example::
 
-   $ dtrx coreutils-5.*.tar.gz
+`   $ dtrx coreutils-5.*.tar.gz`
 
 You may specify URLs as arguments as well.  If you do, dtrx will use `wget
 -c` to download the URL to the current directory and then extract what it
@@ -63,12 +63,12 @@ OPTIONS
 
 dtrx supports a number of options to mandate specific behavior:
 
--r, --recursive
+`-r, --recursive`
    With this option, dtrx will search inside the archives you specify to see
    if any of the contents are themselves archives, and extract those as
    well.
 
---one, --one-entry
+`--one, --one-entry`
    Normally, if an archive only contains one file or directory with a name
    that doesn't match the archive's, dtrx will ask you how to handle it.
    With this option, you can specify ahead of time what should happen.
@@ -85,40 +85,40 @@ dtrx supports a number of options to mandate specific behavior:
    here
       Extract the file/directory in the current directory.
 
--o, --overwrite
+`-o, --overwrite`
    Normally, dtrx will avoid extracting into a directory that already exists,
    and instead try to find an alternative name to use.  If this option is
    listed, dtrx will use the default directory name no matter what.
 
--f, --flat
+`-f, --flat`
    Extract all archive contents into the current directory, instead of
    their own dedicated directory.  This is handy if you have multiple
    archive files which all need to be extracted into the same directory
    structure.  Note that existing files may be overwritten with this
    option.
 
--n, --noninteractive
+`-n, --noninteractive`
    dtrx will normally ask the user how to handle certain corner cases, such
    as how to handle an archive that only contains one file.  This option
    suppresses those questions; dtrx will instead use sane, conservative
    defaults.
 
--l, -t, --list, --table
+`-l, -t, --list, --table`
    Don't extract the archives; just list their contents on standard output.
 
--m, --metadata
+`-m, --metadata`
    Extract the metadata from .deb and .gem archives, instead of their normal
    contents.
 
--q, --quiet
+`-q, --quiet`
    Suppress warning messages.  List this option twice to make dtrx silent.
 
--v, --verbose
+`-v, --verbose`
    Show the files that are being extracted.  List this option twice to
    print debugging information.
 
---help
+`--help`
    Display basic help.
 
---version
+`--version`
    Display dtrx's version, copyright, and license information.
